@@ -1,0 +1,9 @@
+{
+  "autodeskProduct": "Fusion",
+  "type": "script",
+  "author": "",
+  "description": {"": "Builds the whole synth case (base, lid, button caps) from parameters"},
+  "supportedOS": "windows|mac",
+  "editEnabled": true,
+  "version": "1.0.0"
+}

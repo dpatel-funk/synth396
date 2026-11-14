@@ -1,0 +1,12 @@
+.DS_Store
+run_tests
+*.o
+*-backups/
+*.kicad_prl
+fp-info-cache
+_autosave-*
+*.bak
+.history/
+.vscode/
+__pycache__/
+sketch_check
