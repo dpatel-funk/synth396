@@ -124,6 +124,11 @@ int main(int argc, char **argv) {
   // Comb feedback for T60: echo 1 has amplitude 1, echo k has g^(k-1)
   if (want(8)) {
   {
+    Reverb r2; float peak1 = 0;
+    for (int n = 0; n < 5000; n++) { float y = r2.process(n == 0 ? 1.0f : 0.0f);
+    if (n > 0) peak1 = fmaxf(peak1, fabsf(y)); }
+    check(peak1 > 0.01f, "reverb: echoes appear after the first sample", peak1, 0.01);
+
     const int N = 1116; const float T60 = 2.0f;
     float g = combFeedbackForT60(N, T60, fs);
     Comb<1116> c; c.set(g, 0.0f);

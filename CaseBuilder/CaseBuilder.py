@@ -23,12 +23,18 @@ POT_HOLE = 8.0
 BTNS = [(59.25 + 14.0 * c, y) for y in (79.25, 89.75) for c in range(4)]
 BTN_HOLE = 7.6
 LED, LED_HOLE = (136.23, 114.0), 5.0
-FSW, FSW_HOLE = (139.0, 132.0), 12.4
+FSW, FSW_HOLE = (136.0, 133.0), 13.0   # footswitch: thread ~12 mm, hole oversize for print shrink
+FSW_RAISE = 5.0                        # lid is raised this much over the footswitch (body ~16 mm deep, ceiling only 14 mm)
+FSW_POCKET = (28.0, 17.0)              # inner size X, Y of the raised pocket (switch body ~25 x 14, long side along X)
+FSW_POCKET_WALL = 2.4                  # wall of the raised pocket
+FSW_SEPARATE_PAD = True                # False: pad is part of the lid (needs supports). True: lid gets a window and the pad is a separate part
+                                       # that prints roof-down on the bed with no supports; glue it over the window.
+PAD_PLACE = (100.0, 45.0)              # where the separate pad is laid out (Fusion X, Y), away from the case and caps
 
 TEENSY_Y = 125.38                      # USB centre line (KiCad y)
 USB_W, USB_H, USB_ZC = 12.0, 9.0, 9.0  # width, height, centre height above PCB top
-JACK_YS = [94.0, 106.0]                # KiCad y of the two 1/4" jacks (right wall)
-JACK_D, JACK_ZC = 9.6, 7.0
+JACK_YS = [86.0, 110.0]                # KiCad y of the two 1/4" jacks (right wall), 24 mm apart (washers are ~16 mm)
+JACK_D, JACK_ZC = 10.0, 7.5            # 10 mm hole for the 3/8" bushing; turn the lug ears to point along the wall
 
 BTN_TOP = 5.0          # height of the 6x6x5 mm tact switch above the PCB top (measure when they arrive)
 CAP_STEM_D, CAP_FLANGE_D, CAP_CORE_D = 7.0, 9.4, 5.5   # flange must stay under 10.5 (button row pitch)
@@ -46,7 +52,7 @@ POT_LABELS = ['LEVEL', 'TONE', 'MIX', 'TIME', 'PITCH', 'SYNTH']   # RV1..RV6
 POT_LABEL_Y = 53.0                       # KiCad y of the pot labels (behind the knobs)
 LEGEND = [('1 DLY  2 CHO', 98.0), ('3 DST  4 REV', 103.0), ('5-8 SYNTH', 108.0)]  # (text, KiCad y)
 LEGEND_X = 78.0
-FSW_LABEL = ('FX ON', 137.6, 120.5)      # text, KiCad x, KiCad y (between LED and footswitch)
+FSW_LABEL = ('FX ON', 136.23, 107.8)     # text, KiCad x, KiCad y (just above the LED, clear of the raised footswitch pad)
 CAP_DIGIT_H = 4.0
 
 # ======================= derived =======================
@@ -60,7 +66,7 @@ IY0, IY1 = BOARD_Y0 - CLEAR, BOARD_Y1 + CLEAR
 OX0, OX1 = IX0 - WALL, IX1 + WALL
 OY0, OY1 = IY0 - WALL, IY1 + WALL
 
-NAMES_NEW = ('BASE CASE v2', 'CASE LID v2', 'BUTTON CAPS')
+NAMES_NEW = ('BASE CASE v2', 'CASE LID v2', 'BUTTON CAPS', 'FOOTSWITCH PAD')
 NAMES_OLD = ('BASE CASE', 'CASE LID')
 
 
@@ -185,8 +191,48 @@ def build_lid(root):
     for (x, y) in BTNS:
         circle(sk, x, -y, Z_LID_U, BTN_HOLE)
     circle(sk, LED[0], -LED[1], Z_LID_U, LED_HOLE)
-    circle(sk, FSW[0], -FSW[1], Z_LID_U, FSW_HOLE)
     extrude(c, sk, CUT, LID_T + 1.0)
+    # 5. raised pocket over the footswitch so its ~16 mm body clears the board
+    pw, ph = FSW_POCKET
+    ow = FSW_POCKET_WALL
+    fx, fy = FSW
+    if FSW_SEPARATE_PAD:
+        # window through the plate; the separate pad is glued on top around it
+        sk = c.sketches.add(z_plane(c, Z_LID_U))
+        rect(sk, fx - pw / 2.0, -(fy + ph / 2.0), fx + pw / 2.0, -(fy - ph / 2.0), Z_LID_U)
+        extrude(c, sk, CUT, LID_T + 1.0)
+        return c
+    sk = c.sketches.add(z_plane(c, Z_LID_U))
+    rect(sk, fx - pw / 2.0 - ow, -(fy + ph / 2.0 + ow), fx + pw / 2.0 + ow, -(fy - ph / 2.0 - ow), Z_LID_U)
+    extrude(c, sk, JOIN, FSW_RAISE + LID_T)              # outer block, top = lid top + FSW_RAISE
+    sk = c.sketches.add(z_plane(c, Z_LID_U))
+    rect(sk, fx - pw / 2.0, -(fy + ph / 2.0), fx + pw / 2.0, -(fy - ph / 2.0), Z_LID_U)
+    extrude(c, sk, CUT, FSW_RAISE)                       # pocket, open to the underside
+    z_top = Z_LID_U + FSW_RAISE
+    sk = c.sketches.add(z_plane(c, z_top))
+    circle(sk, fx, -fy, z_top, FSW_HOLE)
+    extrude(c, sk, CUT, LID_T + 1.0)                     # switch hole through the pocket roof
+    return c
+
+
+def build_pad(root):
+    """Separate footswitch pad, modelled roof-down (roof on the bed) so it prints with no supports.
+    Glue it on the lid top around the window. Its height is FSW_RAISE, so the roof underside ends up
+    FSW_RAISE above the lid underside, same as the integrated version."""
+    c = new_comp(root, 'FOOTSWITCH PAD')
+    pw, ph = FSW_POCKET
+    ow = FSW_POCKET_WALL
+    px, py = PAD_PLACE
+    sk = c.sketches.add(c.xYConstructionPlane)
+    rect(sk, px - pw / 2.0 - ow, py - ph / 2.0 - ow, px + pw / 2.0 + ow, py + ph / 2.0 + ow, 0.0)
+    f = extrude(c, sk, NEW, FSW_RAISE)
+    f.bodies.item(0).name = 'Footswitch pad'
+    sk = c.sketches.add(z_plane(c, LID_T))               # cavity, open at the top (roof stays LID_T thick)
+    rect(sk, px - pw / 2.0, py - ph / 2.0, px + pw / 2.0, py + ph / 2.0, LID_T)
+    extrude(c, sk, CUT, FSW_RAISE)
+    sk = c.sketches.add(c.xYConstructionPlane)           # switch hole through the roof
+    circle(sk, px, py, 0.0, FSW_HOLE)
+    extrude(c, sk, CUT, LID_T + 0.5)
     return c
 
 
@@ -285,14 +331,19 @@ def run(context):
         root = design.rootComponent
         old = [root.occurrences.item(i) for i in range(root.occurrences.count)]
         for o in old:
-            n = o.component.name
-            if n in NAMES_NEW:
-                o.deleteMe()
-            elif n in NAMES_OLD:
-                o.isLightBulbOn = False
+            try:
+                n = o.component.name
+                if n.startswith(NAMES_NEW):          # also catches renamed copies like 'CASE LID v2 (1)'
+                    o.deleteMe()
+                elif n in NAMES_OLD:
+                    o.isLightBulbOn = False
+            except:
+                pass
         build_base(root)
         lid = build_lid(root)
         caps = build_caps(root)
+        if FSW_SEPARATE_PAD:
+            build_pad(root)
         notes = ''
         try:
             engrave_lid(lid)
