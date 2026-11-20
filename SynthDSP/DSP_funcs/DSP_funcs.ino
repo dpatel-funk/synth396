@@ -1,4 +1,4 @@
-// DspLab - check your DSP formulas visually with the Arduino IDE's Serial Plotter.
+// DSP_funcs - check your DSP formulas visually with the Arduino IDE's Serial Plotter.
 //
 // How to use (Arduino IDE 2.x, board: Teensy 4.1 via Teensyduino):
 //   1. Upload this sketch.

@@ -25,7 +25,7 @@ class Osc {
 
  private:
   float phase = 0.0f;
-  float inc;
+  float inc = 0.0f;
 };
 
 }  // namespace dsp

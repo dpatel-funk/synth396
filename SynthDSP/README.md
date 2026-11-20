@@ -5,8 +5,8 @@ no Arduino calls inside `src/dsp/`, so the same code runs on a laptop and on the
 
 ```
 SynthDSP/
-  DspLab/                  <- open this folder in Arduino IDE (sketch name = folder name)
-    DspLab.ino             <- sends test curves to the Serial Plotter
+  DSP_funcs/                  <- open this folder in Arduino IDE (sketch name = folder name)
+    DSP_funcs.ino             <- sends test curves to the Serial Plotter
     src/dsp/
       Common.h             dB<->gain, pot maps, MIDI->Hz, equal-power mix
       Biquad.h             RBJ low-pass (TONE) + Butterworth theory
@@ -25,7 +25,7 @@ SynthDSP/
 ## The plan
 
 **Phase 1 (do this first): write the functions.** Eight stages, easiest first. Every file in
-`DspLab/src/dsp/` is a skeleton that compiles, returns dummy values, and has a short formula hint.
+`DSP_funcs/src/dsp/` is a skeleton that compiles, returns dummy values, and has a short formula hint.
 Fill in the bodies yourself; the doc "Guitar Synth: DSP Formulas and Sources" explains each formula.
 
 **Phase 2 (after Phase 1): the main body.** An `Engine` class that owns all the blocks, a `Controls`
@@ -62,8 +62,8 @@ what to look at.
   That is the Phase 2 decision point.
 
 ```
-DspLab/DspLab.ino      plot tests 1-6 and the LIVE readout 7
-DspLab/src/dsp/        your code (skeletons now); Analysis.h and All.h are given
+DSP_funcs/DSP_funcs.ino      plot tests 1-6 and the LIVE readout 7
+DSP_funcs/src/dsp/        your code (skeletons now); Analysis.h and All.h are given
 tests/run_tests.cpp    checks each block against theory
 ```
 

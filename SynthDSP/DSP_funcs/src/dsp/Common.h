@@ -26,7 +26,7 @@ inline float midiToHz(float note, float bendSemitones = 0.0f) { float expo = not
 
 // Equal-power dry/wet gains for mix m in 0..1. 
 inline void equalPowerMix(float m, float &dryGain, float &wetGain) {
-  float angle = (kPi/4) * m; dryGain = cosf(angle); wetGain = sinf(angle);
+  float angle = (kPi/2) * m; dryGain = cosf(angle); wetGain = sinf(angle);
 }
 
 }  // namespace dsp
